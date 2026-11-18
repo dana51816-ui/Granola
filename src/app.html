@@ -1,0 +1,528 @@
+<title>מחשבון גררילה</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Rubik:ital,wght@0,400;0,500;0,700;0,800;0,900;1,800;1,900&display=swap">
+<style>
+/* Layout: one-thumb phone console. Route in, giant price out, actions at the bottom. Dark "truck cab at night" ground with the brand's safety orange. */
+:root{
+  --ink:#0E0E0D;          /* brand black */
+  --cab:#171614;          /* raised surface */
+  --cab-2:#211F1C;        /* field / chip */
+  --line:#34302B;         /* hairline */
+  --cream:#FCFBF7;        /* brand cream */
+  --muted:#A59D92;        /* secondary text */
+  --orange:#FE5702;       /* brand orange */
+  --orange-2:#FF7A33;     /* hover / glow */
+  --strap:#FE570226;      /* orange tint */
+  --ok:#3DDC84; --warn:#FFC23D; --bad:#FF5A5A;
+  --f-ui:"Rubik",system-ui,"Segoe UI",Arial,sans-serif;
+  --f-num:"Anton","Rubik",Impact,"Arial Narrow",sans-serif;
+  --r:16px;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{background:var(--ink);color:var(--cream);font-family:var(--f-ui);font-size:16px;-webkit-tap-highlight-color:transparent}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--ink)}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--orange);outline-offset:2px}
+.app{max-width:520px;margin:0 auto;min-height:100%;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 calc(96px + env(safe-area-inset-bottom,0px))}
+
+/* ---------- header ---------- */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:linear-gradient(var(--ink) 75%,transparent);display:flex;align-items:center;gap:12px;padding-block:12px 14px}
+.top img{width:46px;height:46px;border-radius:50%;flex:none;box-shadow:0 0 0 2px var(--ink),0 0 0 3px var(--orange)}
+.brand{display:flex;flex-direction:column;line-height:1;min-width:0}
+.brand b{font-weight:900;font-style:italic;font-size:26px;letter-spacing:-.5px}
+.brand b span{color:var(--orange)}
+.brand small{font-size:12px;color:var(--muted);margin-top:4px;font-weight:500}
+.clock{margin-inline-start:auto;display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+.clock time{font-family:var(--f-num);font-size:20px;letter-spacing:.5px}
+.pill{font-size:11px;font-weight:700;padding:3px 8px;border-radius:99px;background:var(--cab-2);color:var(--muted);white-space:nowrap}
+.pill.day{background:#3DDC8422;color:var(--ok)}
+.pill.eve{background:#FFC23D22;color:var(--warn)}
+.pill.off{background:#FF5A5A22;color:var(--bad)}
+
+/* ---------- route ---------- */
+.route{position:relative;background:var(--cab);border:1px solid var(--line);border-radius:var(--r);padding:6px}
+.field{position:relative;display:flex;align-items:center;gap:10px;padding:6px 10px;padding-inline-end:58px;border-radius:12px}
+.field+.field{border-top:1px dashed var(--line);border-radius:0 0 12px 12px}
+.dot{width:14px;height:14px;border-radius:50%;flex:none}
+.dot.p{background:var(--orange);box-shadow:0 0 0 4px var(--strap)}
+.dot.d{background:var(--cream);border-radius:3px;transform:rotate(45deg)}
+.field label{font-size:11px;font-weight:700;color:var(--muted);display:block;letter-spacing:.3px}
+.field .in{flex:1;min-width:0}
+.field input{width:100%;background:none;border:0;outline:0;font-size:19px;font-weight:700;padding:2px 0 4px}
+.field input::placeholder{color:#6d665d;font-weight:500}
+.clear{background:none;border:0;color:var(--muted);font-size:20px;padding:6px;line-height:1}
+.swap{position:absolute;inset-inline-end:14px;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:var(--cab-2);display:grid;place-items:center;z-index:2}
+.swap svg{width:18px;height:18px}
+.sugg{position:absolute;z-index:15;inset-inline:0;top:calc(100% + 4px);background:var(--cab-2);border:1px solid var(--line);border-radius:12px;max-height:260px;overflow:auto;box-shadow:0 18px 40px #000a}
+.sugg button{display:flex;justify-content:space-between;align-items:center;gap:8px;width:100%;text-align:start;background:none;border:0;padding:12px 14px;font-size:16px;font-weight:500;border-bottom:1px solid var(--line)}
+.sugg button:last-child{border-bottom:0}
+.sugg button:hover,.sugg button.on{background:var(--strap)}
+.sugg small{color:var(--muted);font-size:12px;white-space:nowrap}
+.chips{display:flex;gap:6px;overflow-x:auto;padding-block:10px 2px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;border:1px solid var(--line);background:var(--cab);border-radius:99px;padding:7px 12px;font-size:14px;font-weight:500}
+.chip:hover{border-color:var(--orange)}
+
+/* ---------- options ---------- */
+.row{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);background:var(--cab);border:1px solid var(--line);border-radius:12px;padding:3px;flex:1 1 100%}
+.seg button{background:none;border:0;border-radius:9px;padding:9px 4px;font-size:14px;font-weight:700;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--cab-2);color:var(--cream);box-shadow:inset 0 0 0 1px var(--line)}
+.seg button[aria-pressed="true"][data-t="eve"]{color:var(--warn)}
+.seg button[aria-pressed="true"][data-t="off"]{color:var(--bad)}
+.seg small{display:block;font-weight:500;font-size:11px;opacity:.8}
+.tog{flex:1 1 0;min-width:0;border:1px solid var(--line);background:var(--cab);border-radius:12px;padding:9px 6px;font-size:13px;font-weight:700;color:var(--muted);text-align:center;line-height:1.2}
+.tog small{display:block;font-weight:500;font-size:11px}
+.tog[aria-pressed="true"]{border-color:var(--orange);color:var(--cream);background:var(--strap)}
+.auto-note{font-size:12px;color:var(--muted);margin-top:6px}
+.auto-note button{background:none;border:0;color:var(--orange);font-weight:700;padding:0;font-size:12px}
+
+/* ---------- price ---------- */
+.ticket{margin-top:16px;position:relative;border-radius:22px;overflow:hidden;background:radial-gradient(120% 90% at 85% 0%,#FE57024d,transparent 60%),linear-gradient(160deg,#1e1a16,#100f0e);border:1px solid #FE570255}
+.ticket::after{content:"";position:absolute;inset:auto 0 0;height:8px;background:repeating-linear-gradient(-45deg,var(--orange) 0 12px,var(--ink) 12px 24px);opacity:.9}
+.t-in{padding:18px 18px 24px}
+.t-head{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.t-head span{font-size:13px;font-weight:700;color:var(--muted)}
+.price{display:flex;align-items:baseline;gap:6px;margin-top:2px;direction:ltr;justify-content:flex-end}
+.price b{font-family:var(--f-num);font-weight:400;font-size:clamp(76px,24vw,112px);line-height:.95;letter-spacing:1px;color:var(--cream);text-shadow:0 6px 30px #FE570240}
+.price i{font-family:var(--f-num);font-style:normal;font-size:40px;color:var(--orange)}
+.vat{font-size:13px;color:var(--muted);text-align:end;margin-top:2px}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}
+.kpi{background:#0006;border:1px solid var(--line);border-radius:12px;padding:8px 10px;min-width:0}
+.kpi span{font-size:11px;color:var(--muted);font-weight:700;display:block}
+.kpi b{font-family:var(--f-num);font-weight:400;font-size:22px;letter-spacing:.5px;font-variant-numeric:tabular-nums}
+.kpi.floor b{color:var(--warn)}
+.empty{padding:28px 18px 34px;text-align:center}
+.empty b{display:block;font-weight:900;font-style:italic;font-size:24px}
+.empty p{color:var(--muted);margin:8px 0 0;font-size:14px}
+.warnbar{margin-top:10px;font-size:13px;font-weight:700;color:var(--bad);background:#FF5A5A1a;border-radius:10px;padding:8px 10px}
+
+/* ---------- map ---------- */
+.map{margin-top:12px;background:var(--cab);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;position:relative}
+.map svg{display:block;width:100%;height:auto}
+.map .cap{position:absolute;inset-inline-start:10px;bottom:8px;font-size:11px;color:var(--muted)}
+.legs{display:flex;gap:6px;flex-wrap:wrap;padding:10px;border-top:1px solid var(--line)}
+.leg{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px}
+.leg i{width:18px;height:0;border-top:3px solid var(--orange);display:inline-block}
+.leg i.dash{border-top:2px dashed var(--muted)}
+.leg b{color:var(--cream);font-variant-numeric:tabular-nums}
+
+/* ---------- script + actions ---------- */
+.card{margin-top:12px;background:var(--cab);border:1px solid var(--line);border-radius:var(--r);padding:14px}
+.card h3{margin:0 0 8px;font-size:13px;color:var(--muted);font-weight:700;display:flex;justify-content:space-between;align-items:center}
+.say{font-size:18px;line-height:1.5;font-weight:500;margin:0}
+.say em{font-style:normal;color:var(--orange);font-weight:800}
+.mini{background:var(--cab-2);border:1px solid var(--line);border-radius:99px;padding:5px 10px;font-size:12px;font-weight:700;color:var(--cream)}
+.wa{display:flex;gap:8px;margin-top:4px}
+.wa input{flex:1;min-width:0;background:var(--cab-2);border:1px solid var(--line);border-radius:12px;padding:12px;font-size:17px;direction:ltr;text-align:right}
+.btn{border:0;border-radius:12px;padding:12px 14px;font-weight:800;font-size:15px;display:inline-flex;align-items:center;justify-content:center;gap:6px;text-decoration:none}
+.btn.wa-b{background:#25D366;color:#06210f}
+.btn.ghost{background:var(--cab-2);border:1px solid var(--line);color:var(--cream)}
+.outcome{display:grid;grid-template-columns:2fr 1fr;gap:8px;margin-top:12px}
+.btn.win{background:var(--orange);color:var(--ink);font-size:18px;padding:16px;font-weight:900;font-style:italic}
+.btn.lose{background:var(--cab);border:1px solid var(--line);color:var(--muted)}
+details.break{margin-top:12px;background:var(--cab);border:1px solid var(--line);border-radius:var(--r)}
+details.break summary{padding:14px;font-weight:700;font-size:14px;cursor:pointer;list-style:none;display:flex;justify-content:space-between}
+details.break summary::after{content:"+";color:var(--orange);font-size:20px;line-height:1}
+details.break[open] summary::after{content:"–"}
+.lines{padding:0 14px 14px;display:grid;gap:8px;font-size:14px}
+.lines div{display:flex;justify-content:space-between;gap:12px}
+.lines span{color:var(--muted)}
+.lines b{font-variant-numeric:tabular-nums;font-weight:700;white-space:nowrap}
+.lines .tot{border-top:1px solid var(--line);padding-top:8px;font-size:16px}
+.lines .tot b{color:var(--orange)}
+.lines label{display:flex;align-items:center;justify-content:space-between;gap:10px;color:var(--muted)}
+.lines label input{width:90px;background:var(--cab-2);border:1px solid var(--line);border-radius:8px;padding:6px 8px;text-align:center}
+
+/* ---------- log ---------- */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:4px}
+.stat{background:var(--cab);border:1px solid var(--line);border-radius:14px;padding:12px}
+.stat span{font-size:12px;color:var(--muted);font-weight:700}
+.stat b{display:block;font-family:var(--f-num);font-weight:400;font-size:30px;margin-top:2px;font-variant-numeric:tabular-nums}
+.stat.o b{color:var(--orange)}
+.goal{margin-top:10px;background:var(--cab);border:1px solid var(--line);border-radius:14px;padding:12px}
+.goal div{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);font-weight:700}
+.bar{height:10px;border-radius:99px;background:var(--cab-2);margin-top:8px;overflow:hidden}
+.bar i{display:block;height:100%;background:repeating-linear-gradient(-45deg,var(--orange) 0 8px,var(--orange-2) 8px 16px);border-radius:99px;transition:width .5s}
+.h2{font-weight:900;font-style:italic;font-size:22px;margin:20px 0 10px;display:flex;justify-content:space-between;align-items:center}
+.list{display:grid;gap:8px}
+.item{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;background:var(--cab);border:1px solid var(--line);border-radius:14px;padding:10px 12px}
+.item .st{width:10px;height:10px;border-radius:50%}
+.item .st.won{background:var(--ok)} .item .st.lost{background:var(--muted)}
+.item p{margin:0;font-weight:700;font-size:15px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.item small{color:var(--muted);font-size:12px}
+.item b{font-family:var(--f-num);font-weight:400;font-size:20px}
+.item.lost b{color:var(--muted);text-decoration:line-through}
+.note{font-size:13px;color:var(--muted);line-height:1.5}
+
+/* ---------- settings ---------- */
+.set{display:grid;gap:10px}
+.grp{background:var(--cab);border:1px solid var(--line);border-radius:var(--r);padding:6px 14px}
+.grp h4{margin:10px 0 4px;font-size:12px;color:var(--orange);letter-spacing:.4px}
+.s{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}
+.s:last-child{border-bottom:0}
+.s label{font-size:14px;font-weight:500;min-width:0}
+.s label small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+.s input,.s select{width:110px;flex:none;background:var(--cab-2);border:1px solid var(--line);border-radius:10px;padding:9px;text-align:center;font-weight:700;font-variant-numeric:tabular-nums}
+.s select{width:170px;text-align:start}
+.market{background:var(--strap);border:1px solid #FE570255;border-radius:var(--r);padding:14px;font-size:14px;line-height:1.6}
+.market b{color:var(--orange)}
+
+/* ---------- nav + toast ---------- */
+.nav{position:fixed;inset:auto 0 0;z-index:25;background:#0E0E0Df2;backdrop-filter:blur(10px);border-top:1px solid var(--line);padding:8px max(16px,env(safe-area-inset-right,0px)) calc(8px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.nav div{max-width:520px;margin:0 auto;display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.nav button{background:none;border:0;border-radius:12px;padding:8px 4px;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:12px;font-weight:700;color:var(--muted)}
+.nav button svg{width:22px;height:22px}
+.nav button[aria-current="page"]{color:var(--orange);background:var(--strap)}
+.toast{position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);opacity:0;z-index:40;background:var(--cream);color:var(--ink);font-weight:800;padding:12px 18px;border-radius:99px;transition:.25s;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div class="app" dir="rtl" lang="he">
+  <header class="top">
+    <img src="@@LOGO@@" alt="לוגו גררילה">
+    <div class="brand"><b>ג<span>ר</span>רילה</b><small>מחשבון גרירה · אופנועים וקטנועים</small></div>
+    <div class="clock"><time id="clk">--:--</time><span class="pill" id="modePill">—</span></div>
+  </header>
+
+  <!-- ================= QUOTE ================= -->
+  <main id="v-quote">
+    <section class="route" aria-label="מסלול">
+      <div class="field" id="f-pick">
+        <span class="dot p"></span>
+        <div class="in"><label for="pick">איסוף · איפה האופנוע?</label><input id="pick" autocomplete="off" placeholder="עיר או אזור"></div>
+        <button class="clear" data-clear="pick" aria-label="נקה איסוף" hidden>×</button>
+      </div>
+      <div class="field" id="f-dest">
+        <span class="dot d"></span>
+        <div class="in"><label for="dest">יעד · לאן לוקחים?</label><input id="dest" autocomplete="off" placeholder="מוסך, בית, עיר"></div>
+        <button class="clear" data-clear="dest" aria-label="נקה יעד" hidden>×</button>
+      </div>
+      <button class="swap" id="swap" aria-label="החלף איסוף ויעד"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M7 4v16M7 20l-3-3M7 20l3-3M17 20V4M17 4l-3 3M17 4l3 3"/></svg></button>
+      <div class="sugg" id="sugg" hidden role="listbox"></div>
+    </section>
+    <div class="chips" id="chips" aria-label="מקומות מהירים"></div>
+
+    <div class="row">
+      <div class="seg" role="group" aria-label="תעריף">
+        <button data-t="day" aria-pressed="false">רגיל<small>א׳–ה׳ 06–18</small></button>
+        <button data-t="eve" aria-pressed="false">ערב<small>18–21</small></button>
+        <button data-t="off" aria-pressed="false">מיוחד<small>לילה / שישי</small></button>
+      </div>
+    </div>
+    <div class="auto-note" id="autoNote"></div>
+    <div class="row" role="group" aria-label="תוספות">
+      <button class="tog" data-x="heavy" aria-pressed="false">אופנוע כבד<small id="xs-heavy"></small></button>
+      <button class="tog" data-x="complex" aria-pressed="false">חילוץ מורכב<small id="xs-complex"></small></button>
+      <button class="tog" data-x="urgent" aria-pressed="false">דחוף<small id="xs-urgent"></small></button>
+    </div>
+
+    <section class="ticket" id="ticket" aria-live="polite"></section>
+
+    <section class="map" id="map" hidden></section>
+
+    <section class="card" id="sayCard" hidden>
+      <h3>מה להגיד ללקוח <button class="mini" id="copySay">העתק</button></h3>
+      <p class="say" id="say"></p>
+    </section>
+
+    <section class="card" id="waCard" hidden>
+      <h3>שליחת הצעה בוואטסאפ</h3>
+      <div class="wa">
+        <input id="cphone" inputmode="tel" placeholder="050-0000000" aria-label="טלפון הלקוח">
+        <a class="btn wa-b" id="waBtn" href="#" target="_blank" rel="noopener">שלח</a>
+      </div>
+    </section>
+
+    <div class="outcome" id="outcome" hidden>
+      <button class="btn win" id="won">נסגר! רשום גרירה</button>
+      <button class="btn lose" id="lost">לא נסגר</button>
+    </div>
+
+    <details class="break" id="break" hidden>
+      <summary>איך הגענו למחיר</summary>
+      <div class="lines" id="lines"></div>
+    </details>
+  </main>
+
+  <!-- ================= LOG ================= -->
+  <main id="v-log" hidden>
+    <div class="h2" style="margin-top:4px">היום</div>
+    <div class="stats">
+      <div class="stat"><span>שיחות</span><b id="s-calls">0</b></div>
+      <div class="stat"><span>נסגרו</span><b id="s-won">0</b></div>
+      <div class="stat o"><span>הכנסה</span><b id="s-rev">₪0</b></div>
+    </div>
+    <div class="goal">
+      <div><span>החודש: <span id="g-txt">0 מתוך 100 גרירות</span></span><span id="g-conv">המרה —</span></div>
+      <div class="bar"><i id="g-bar" style="width:0"></i></div>
+    </div>
+    <div class="h2">יומן שיחות <button class="mini" id="copyLog">העתק לגיליון</button></div>
+    <div class="list" id="list"></div>
+    <p class="note" id="logNote">כל שיחה שמסמנים "נסגר" או "לא נסגר" נכנסת לכאן. "העתק לגיליון" מעתיק את הגרירות בפורמט של לשונית "גרירות" בקובץ הכספים, ואז מדביקים בשורה הריקה הראשונה.</p>
+  </main>
+
+  <!-- ================= SETTINGS ================= -->
+  <main id="v-set" hidden>
+    <div class="h2" style="margin-top:4px">תעריפים</div>
+    <div class="set" id="setForm"></div>
+    <div class="h2">למה המחירים האלה</div>
+    <div class="market">
+      בשוק, גרירת אופנוע או קטנוע עולה בדרך כלל <b>250–470 ₪</b>. עד 10 ק״מ המחיר נע סביב 110–270 ₪, עד 30 ק״מ 270–490 ₪, ומעבר לזה מוסיפים <b>4–11 ₪ לכל ק״מ</b>. תוספת ערב או לילה היא בדרך כלל 50–100 ₪, ושבת וחג כ־100 ₪. לדוגמה, גרירה מתל אביב לראשון לציון מתומחרת בשוק בכ־350 ₪.<br><br>
+      המחשבון סופר את כל הנסיעה של מתן: <b>מהבסיס בגן הורדים אל האופנוע, משם ליעד, וחזרה הביתה</b>. 249 ₪ מכסים את 20 הק״מ הראשונים של הסבב, כך שכל עבודה בתוך ראשון, נס ציונה ובאר יעקב יוצאת במחיר המינימום. מעבר לזה כל ק״מ מוסיף 4.5 ₪, ובנסיעות ארוכות התעריף יורד ל־3.5 ₪, כי ק״מ בכביש מהיר זול יותר בזמן. ככה תל אביב יוצאת בערך 339 ₪, ממש באמצע השוק, ולא 300 ₪ כמו שיצא עד היום.
+    </div>
+    <div class="row"><button class="btn ghost" id="resetSet" style="flex:1">החזר לברירת מחדל</button></div>
+  </main>
+
+  <nav class="nav" aria-label="ניווט"><div>
+    <button data-v="quote" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="3"/><path d="M8 7h8M8 12h2M14 12h2M8 16h2M14 16h2"/></svg>מחשבון</button>
+    <button data-v="log"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg>יומן</button>
+    <button data-v="set"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>תעריפים</button>
+  </div></nav>
+  <div class="toast" id="toast" role="status"></div>
+</div>
+
+<script>
+/*@@PLACES@@*/
+(function(){
+"use strict";
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const store={get(k,d){try{const v=localStorage.getItem("grr."+k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem("grr."+k,JSON.stringify(v))}catch(e){}}};
+
+/* ---------- defaults ---------- */
+const DEF={base:"ראשון לציון – גן הורדים",minPrice:249,includedKm:20,rate1:4.5,tier1Until:80,rate2:3.5,evening:50,offhours:100,heavy:50,complex:50,urgent:50,rounding:"9",vat:18,floorPct:8,fuelPerKm:1.1,speed:45,handlingMin:25,monthlyGoal:100,phone:"054-9338228"};
+let S=Object.assign({},DEF,store.get("settings",{}));
+let LOG=store.get("log",[]);
+let RECENT=store.get("recent",[]);
+
+/* ---------- geo ---------- */
+const P=PLACES.map(([n,la,lo,al])=>({n,la,lo,key:norm(n+" "+(al||""))}));
+const byName=Object.fromEntries(P.map(p=>[p.n,p]));
+function norm(s){return s.replace(/["'׳״`\-–]/g," ").replace(/\s+/g," ").trim()}
+function hav(a,b){const R=6371,t=Math.PI/180,dLa=(b.la-a.la)*t,dLo=(b.lo-a.lo)*t;const h=Math.sin(dLa/2)**2+Math.cos(a.la*t)*Math.cos(b.la*t)*Math.sin(dLo/2)**2;return 2*R*Math.asin(Math.sqrt(h))}
+function road(a,b,floor){const d=hav(a,b);const f=d<10?1.35:d<40?1.25:1.18;return Math.max(d*f,floor)}
+function find(q){q=norm(q);if(!q)return[];const w=q.split(" ");return P.map(p=>{let sc=0;if(p.n===q)sc=100;else if(p.key.startsWith(q))sc=60;else if(w.every(x=>p.key.includes(x)))sc=30;return{p,sc}}).filter(x=>x.sc).sort((a,b)=>b.sc-a.sc||a.p.n.length-b.p.n.length).slice(0,8).map(x=>x.p)}
+
+/* ---------- time mode ---------- */
+let modeManual=null, extras={heavy:false,complex:false,urgent:false};
+function autoMode(d=new Date()){const day=d.getDay(),h=d.getHours()+d.getMinutes()/60;if(day===6)return"sat";if(day===5)return"off";if(h>=6&&h<18)return"day";if(h>=18&&h<21)return"eve";return"off"}
+function mode(){const a=autoMode();return modeManual||(a==="sat"?"off":a)}
+
+/* ---------- pricing ---------- */
+function roundP(x){const r=S.rounding;if(r==="50")return Math.ceil(x/50)*50;if(r==="10")return Math.ceil(x/10)*10;return Math.ceil((x+1)/10)*10-1}
+let manualKm=null;
+function quote(pick,dest){
+  const base=byName[S.base]||P[0];
+  const a=road(base,pick,2), l=manualKm!=null?manualKm:road(pick,dest,3), b=road(dest,base,2);
+  const cycle=a+l+b;
+  const extraKm=Math.max(0,cycle-S.includedKm);
+  const k1=Math.min(extraKm,Math.max(0,S.tier1Until-S.includedKm)), k2=Math.max(0,cycle-Math.max(S.tier1Until,S.includedKm));
+  const kmCost=k1*S.rate1+k2*S.rate2;
+  const m=mode(), sur=m==="eve"?+S.evening:m==="off"?+S.offhours:0;
+  const ex=Object.keys(extras).filter(k=>extras[k]).reduce((s,k)=>s+ +S[k],0);
+  const raw=+S.minPrice+kmCost+sur+ex;
+  const price=Math.max(+S.minPrice,roundP(raw));
+  const floor=Math.max(+S.minPrice,roundP(price*(1-S.floorPct/100)-10));
+  const net=price/(1+S.vat/100);
+  const fuel=cycle*S.fuelPerKm;
+  const hours=cycle/S.speed+S.handlingMin/60;
+  const eta=Math.max(10,Math.round((a/S.speed*60+8)/5)*5);
+  return{a,l,b,cycle,k1,k2,kmCost,sur,ex,raw,price,floor,net,vatAmt:price-net,fuel,hours,perHour:(net-fuel)/hours,eta,m};
+}
+
+/* ---------- state + render ---------- */
+let pick=null,dest=null,Q=null;
+const fmt=n=>"₪"+Math.round(n).toLocaleString("he-IL");
+const km=n=>(n<10?n.toFixed(1):Math.round(n))+" ק״מ";
+
+function renderClock(){const d=new Date();$("#clk").textContent=d.toLocaleTimeString("he-IL",{hour:"2-digit",minute:"2-digit"});const a=autoMode(d);const pill=$("#modePill");const map={day:["שעות רגילות","day"],eve:["תעריף ערב","eve"],off:["מחוץ לשעות","off"],sat:["שבת · לא עובדים","off"]};pill.textContent=map[a][0];pill.className="pill "+map[a][1]}
+function renderMode(){const m=mode();$$(".seg button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.t===m));const a=autoMode();
+  $("#autoNote").innerHTML=modeManual?`נבחר ידנית. <button id="toAuto">חזור לאוטומטי</button>`:a==="sat"?"שבת: מתן לא עובד היום. המחיר מחושב בתעריף מיוחד.":"התעריף נקבע אוטומטית לפי השעה עכשיו.";
+  const t=$("#toAuto");if(t)t.onclick=()=>{modeManual=null;update()}}
+function renderExtras(){$$(".tog").forEach(b=>{b.setAttribute("aria-pressed",extras[b.dataset.x]);$("#xs-"+b.dataset.x).textContent="+"+fmt(S[b.dataset.x])})}
+
+function renderChips(){
+  const pool=[...RECENT,"ראשון לציון – מרכז","נס ציונה","רחובות","באר יעקב","חולון","תל אביב – מרכז","בת ים","יבנה","רמלה"];
+  const seen=new Set(),names=pool.filter(n=>byName[n]&&!seen.has(n)&&seen.add(n)).slice(0,10);
+  $("#chips").innerHTML=names.map(n=>`<button class="chip" data-n="${n}">${n.replace("ראשון לציון – ","ראשל״צ ").replace("תל אביב – ","ת״א ")}</button>`).join("");
+}
+
+let animFrom=0;
+function animate(el,to){const from=animFrom;animFrom=to;if(matchMedia("(prefers-reduced-motion: reduce)").matches||from===to){el.textContent=to;return}const t0=performance.now(),dur=450;(function step(t){const k=Math.min(1,(t-t0)/dur),e=1-Math.pow(1-k,3);el.textContent=Math.round(from+(to-from)*e);if(k<1)requestAnimationFrame(step)})(t0)}
+
+function update(){
+  renderMode();renderExtras();
+  $$(".clear").forEach(b=>b.hidden=!$("#"+b.dataset.clear).value);
+  const ready=pick&&dest;
+  ["#map","#sayCard","#waCard","#outcome","#break"].forEach(s=>$(s).hidden=!ready);
+  if(!ready){Q=null;animFrom=0;$("#ticket").innerHTML=`<div class="empty"><b>${!pick?"מאיפה אוספים?":"ולאן לוקחים?"}</b><p>${!pick?"מקלידים עיר או בוחרים מהכפתורים. המחיר יופיע כאן מיד.":"בחר יעד, והמחיר מוכן להגיד ללקוח."}</p></div>`;return}
+  Q=quote(pick,dest);
+  const tag={day:"תעריף רגיל",eve:"תעריף ערב",off:"תעריף מיוחד"}[Q.m];
+  $("#ticket").innerHTML=`<div class="t-in">
+    <div class="t-head"><span>${pick.n} ← ${dest.n}</span><span class="pill ${Q.m}">${tag}</span></div>
+    <div class="price"><i>₪</i><b id="pnum">${Q.price}</b></div>
+    <div class="vat">כולל מע״מ · לפני מע״מ ${fmt(Q.net)}</div>
+    <div class="kpis">
+      <div class="kpi floor"><span>לא לרדת מתחת</span><b>${fmt(Q.floor)}</b></div>
+      <div class="kpi"><span>הגעה ללקוח</span><b>${Q.eta} דק׳</b></div>
+      <div class="kpi"><span>נשאר לך לשעה</span><b>${fmt(Q.perHour)}</b></div>
+    </div>
+    ${autoMode()==="sat"?'<div class="warnbar">היום שבת. בפרסום כתוב "ללא עבודה בשבת".</div>':""}
+  </div>`;
+  animate($("#pnum"),Q.price);
+  renderMap();
+  const when=Q.eta<=20?"תוך כרבע שעה":Q.eta<=35?`תוך כ־${Q.eta} דקות`:`תוך כ־${Math.round(Q.eta/5)*5} דקות`;
+  $("#say").innerHTML=`״גרירה מ<em>${short(pick.n)}</em> ל<em>${short(dest.n)}</em> יוצאת <em>${Q.price} שקל</em>, כולל מע״מ. אני יכול להיות אצלך ${when}. לצאת אליך?״`;
+  const ph=$("#cphone").value.replace(/\D/g,"");const intl=ph.startsWith("0")?"972"+ph.slice(1):ph;
+  const msg=`שלום, כאן מתן מגררילה – גרירת אופנועים וקטנועים.\nהצעת מחיר לגרירה:\n• איסוף: ${pick.n}\n• יעד: ${dest.n}\n• מחיר: ₪${Q.price} כולל מע״מ\n• זמן הגעה משוער: כ־${Q.eta} דקות\nלאישור פשוט עונים "מאשר" ואני יוצא לדרך.\nמתן | ${S.phone}`;
+  $("#waBtn").href=`https://wa.me/${intl.length>=11?intl:""}?text=${encodeURIComponent(msg)}`;
+  $("#lines").innerHTML=`
+    <div><span>בסיס ← איסוף</span><b>${km(Q.a)}</b></div>
+    <div><span>איסוף ← יעד (עם האופנוע)</span><b>${km(Q.l)}</b></div>
+    <div><span>יעד ← חזרה לבסיס</span><b>${km(Q.b)}</b></div>
+    <div><span>סה״כ סבב</span><b>${km(Q.cycle)}</b></div>
+    <div><span>מחיר בסיס (כולל ${S.includedKm} ק״מ)</span><b>${fmt(S.minPrice)}</b></div>
+    ${Q.k1?`<div><span>${Math.round(Q.k1)} ק״מ × ₪${S.rate1}</span><b>+${fmt(Q.k1*S.rate1)}</b></div>`:""}
+    ${Q.k2?`<div><span>${Math.round(Q.k2)} ק״מ ארוכים × ₪${S.rate2}</span><b>+${fmt(Q.k2*S.rate2)}</b></div>`:""}
+    ${Q.sur?`<div><span>${Q.m==="eve"?"תוספת ערב":"תוספת מחוץ לשעות"}</span><b>+${fmt(Q.sur)}</b></div>`:""}
+    ${Q.ex?`<div><span>תוספות</span><b>+${fmt(Q.ex)}</b></div>`:""}
+    <div><span>עיגול</span><b>${Q.price-Q.raw>=0?"+":"−"}${fmt(Math.abs(Q.price-Q.raw))}</b></div>
+    <div class="tot"><span>מחיר ללקוח (כולל ${S.vat}% מע״מ)</span><b>${fmt(Q.price)}</b></div>
+    <div><span>מע״מ להעביר</span><b>${fmt(Q.vatAmt)}</b></div>
+    <div><span>דלק ובלאי משוער</span><b>−${fmt(Q.fuel)}</b></div>
+    <div><span>זמן עבודה משוער</span><b>${Math.floor(Q.hours)}:${String(Math.round(Q.hours%1*60)).padStart(2,"0")} שע׳</b></div>
+    <label>מרחק גרירה ידני (ק״מ)<input id="manKm" inputmode="decimal" placeholder="אוטו׳" value="${manualKm??""}"></label>
+    <div class="note">המרחקים הם הערכת כביש לפי המפה. אם ה־Waze מראה מרחק אחר לגרירה, כותבים אותו כאן והמחיר מתעדכן.</div>`;
+  $("#manKm").onchange=e=>{const v=parseFloat(e.target.value);manualKm=isFinite(v)&&v>0?v:null;update();$("#break").open=true};
+}
+const short=n=>n.replace(" – "," ").replace(/\s*\(.*\)/,"");
+
+/* ---------- map ---------- */
+function renderMap(){
+  const base=byName[S.base]||P[0], pts=[base,pick,dest];
+  const W=600,H=300,pad=46;
+  let laMin=Math.min(...pts.map(p=>p.la)),laMax=Math.max(...pts.map(p=>p.la)),loMin=Math.min(...pts.map(p=>p.lo)),loMax=Math.max(...pts.map(p=>p.lo));
+  const cosL=Math.cos((laMin+laMax)/2*Math.PI/180);
+  let spanX=Math.max((loMax-loMin)*cosL,0.06),spanY=Math.max(laMax-laMin,0.04);
+  const sc=Math.min((W-2*pad)/spanX,(H-2*pad)/spanY);
+  const cx=(loMin+loMax)/2,cy=(laMin+laMax)/2;
+  const X=lo=>W/2+(lo-cx)*cosL*sc, Y=la=>H/2-(la-cy)*sc;
+  const coast=COAST.map(([la,lo])=>`${X(lo).toFixed(1)},${Y(la).toFixed(1)}`);
+  const sea=`M${X(33.0)},${Y(COAST[0][0])} L${coast.join(" L")} L${X(33.0)},${Y(COAST[COAST.length-1][0])} Z`;
+  const dots=P.map(p=>{const x=X(p.lo),y=Y(p.la);return x>-10&&x<W+10&&y>-10&&y<H+10?`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.2" fill="#4a443c"/>`:""}).join("");
+  const [bx,by,px,py,dx,dy]=[X(base.lo),Y(base.la),X(pick.lo),Y(pick.la),X(dest.lo),Y(dest.la)];
+  const same=Math.hypot(px-dx,py-dy)<8;
+  const lbl=(x,y,t,c,up)=>{const tx=x>W-140?"end":x<140?"start":"middle";return `<text x="${x}" y="${y+(up?-14:24)}" text-anchor="${tx}" fill="${c}" font-size="15" font-weight="800" font-family="Rubik,system-ui,sans-serif" paint-order="stroke" stroke="#171614" stroke-width="5">${t}</text>`};
+  $("#map").innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="מפת מסלול סכמטית">
+    <rect width="${W}" height="${H}" fill="#171614"/>
+    <path d="${sea}" fill="#0f1416"/>
+    <path d="M${coast.join(" L")}" fill="none" stroke="#2d3a3e" stroke-width="2"/>
+    ${dots}
+    <path d="M${bx},${by} L${px},${py}" stroke="#8b8378" stroke-width="2.5" stroke-dasharray="6 6" fill="none"/>
+    <path d="M${dx},${dy} L${bx},${by}" stroke="#5c564e" stroke-width="2" stroke-dasharray="3 6" fill="none"/>
+    <path d="M${px},${py} L${dx},${dy}" stroke="#FE5702" stroke-width="6" stroke-linecap="round" fill="none"/>
+    <rect x="${bx-9}" y="${by-9}" width="18" height="18" rx="5" fill="#0E0E0D" stroke="#FE5702" stroke-width="2.5"/>
+    <path d="M${bx-4},${by+1} l4,-5 l4,5 v4 h-8z" fill="#FE5702"/>
+    <circle cx="${px}" cy="${py}" r="11" fill="#FE5702" stroke="#0E0E0D" stroke-width="3"/>
+    <rect x="${dx-8}" y="${dy-8}" width="16" height="16" rx="2" transform="rotate(45 ${dx} ${dy})" fill="#FCFBF7" stroke="#0E0E0D" stroke-width="3"/>
+    ${lbl(bx,by,"בסיס","#A59D92",by>py)}
+    ${lbl(px,py,short(pick.n),"#FE5702",true)}
+    ${same?"":lbl(dx,dy,short(dest.n),"#FCFBF7",dy<py)}
+  </svg>
+  <div class="legs">
+    <span class="leg"><i class="dash"></i>אליו <b>${km(Q.a)}</b></span>
+    <span class="leg"><i></i>גרירה <b>${km(Q.l)}</b></span>
+    <span class="leg"><i class="dash" style="opacity:.6"></i>חזרה <b>${km(Q.b)}</b></span>
+  </div><span class="cap" hidden>מפה סכמטית</span>`;
+}
+
+/* ---------- autocomplete ---------- */
+let active=null,hi=-1;
+function openSugg(inp){
+  active=inp;const list=inp.value.trim()?find(inp.value):RECENT.map(n=>byName[n]).filter(Boolean).slice(0,6);
+  const box=$("#sugg");hi=-1;
+  if(!list.length){box.innerHTML=inp.value.trim()?`<button disabled>לא נמצא. נסה שם עיר קרוב</button>`:"";box.hidden=!inp.value.trim();return}
+  const base=byName[S.base]||P[0];
+  box.innerHTML=list.map((p,i)=>`<button role="option" data-n="${p.n}" data-i="${i}">${p.n}<small>${Math.round(road(base,p,2))} ק״מ מהבסיס</small></button>`).join("");
+  box.style.top=inp.id==="pick"?"58px":"calc(100% + 4px)";box.hidden=false;
+}
+function choose(n){const p=byName[n];if(!p||!active)return;active.value=p.n;if(active.id==="pick")pick=p;else dest=p;
+  RECENT=[n,...RECENT.filter(x=>x!==n)].slice(0,8);store.set("recent",RECENT);
+  $("#sugg").hidden=true;manualKm=null;const next=active.id==="pick"&&!dest?$("#dest"):null;active=null;renderChips();update();if(next){next.focus();openSugg(next)}else document.activeElement.blur()}
+["pick","dest"].forEach(id=>{const inp=$("#"+id);
+  inp.addEventListener("focus",()=>openSugg(inp));
+  inp.addEventListener("input",()=>{if(id==="pick")pick=null;else dest=null;openSugg(inp);update()});
+  inp.addEventListener("keydown",e=>{const bs=$$("#sugg button[data-n]");if(!bs.length)return;
+    if(e.key==="ArrowDown"||e.key==="ArrowUp"){e.preventDefault();hi=(hi+(e.key==="ArrowDown"?1:-1)+bs.length)%bs.length;bs.forEach((b,i)=>b.classList.toggle("on",i===hi))}
+    if(e.key==="Enter"){e.preventDefault();choose((bs[hi]||bs[0]).dataset.n)}
+    if(e.key==="Escape")$("#sugg").hidden=true});
+});
+$("#sugg").addEventListener("pointerdown",e=>{const b=e.target.closest("button[data-n]");if(b){e.preventDefault();choose(b.dataset.n)}});
+document.addEventListener("pointerdown",e=>{if(!e.target.closest(".route"))$("#sugg").hidden=true});
+$("#chips").addEventListener("click",e=>{const b=e.target.closest(".chip");if(!b)return;active=!pick?$("#pick"):$("#dest");if(pick&&dest)active=$("#dest");choose(b.dataset.n)});
+$$(".clear").forEach(b=>b.onclick=()=>{const id=b.dataset.clear;$("#"+id).value="";if(id==="pick")pick=null;else dest=null;update();$("#"+id).focus()});
+$("#swap").onclick=()=>{[pick,dest]=[dest,pick];$("#pick").value=pick?pick.n:"";$("#dest").value=dest?dest.n:"";update()};
+
+/* ---------- options ---------- */
+$$(".seg button").forEach(b=>b.onclick=()=>{modeManual=b.dataset.t;update()});
+$$(".tog").forEach(b=>b.onclick=()=>{extras[b.dataset.x]=!extras[b.dataset.x];update()});
+$("#cphone").addEventListener("input",update);
+
+/* ---------- copy + toast ---------- */
+function toast(t){const el=$("#toast");el.textContent=t;el.classList.add("show");clearTimeout(toast.t);toast.t=setTimeout(()=>el.classList.remove("show"),1800)}
+async function copy(text,ok){try{await navigator.clipboard.writeText(text);toast(ok)}catch(e){const ta=document.createElement("textarea");ta.value=text;document.body.appendChild(ta);ta.select();try{document.execCommand("copy");toast(ok)}catch(_){toast("לא הצלחתי להעתיק")}ta.remove()}}
+$("#copySay").onclick=()=>copy($("#say").textContent,"הועתק");
+
+/* ---------- outcome + log ---------- */
+function record(status){if(!Q)return;LOG.unshift({t:Date.now(),from:pick.n,to:dest.n,price:Q.price,status,mode:Q.m});store.set("log",LOG);
+  toast(status==="won"?`נרשם: ${fmt(Q.price)} 💪`:"נרשם כשיחה שלא נסגרה");
+  pick=dest=null;manualKm=null;extras={heavy:false,complex:false,urgent:false};modeManual=null;$("#pick").value=$("#dest").value=$("#cphone").value="";update();renderLog()}
+$("#won").onclick=()=>record("won");$("#lost").onclick=()=>record("lost");
+function renderLog(){
+  const d0=new Date();d0.setHours(0,0,0,0);const m0=new Date(d0.getFullYear(),d0.getMonth(),1);
+  const today=LOG.filter(x=>x.t>=d0),month=LOG.filter(x=>x.t>=m0);
+  const won=today.filter(x=>x.status==="won"),mWon=month.filter(x=>x.status==="won");
+  $("#s-calls").textContent=today.length;$("#s-won").textContent=won.length;$("#s-rev").textContent=fmt(won.reduce((s,x)=>s+x.price,0));
+  $("#g-txt").textContent=`${mWon.length} מתוך ${S.monthlyGoal} גרירות`;
+  $("#g-conv").textContent=month.length?`המרה ${Math.round(mWon.length/month.length*100)}%`:"המרה —";
+  $("#g-bar").style.width=Math.min(100,mWon.length/S.monthlyGoal*100)+"%";
+  $("#list").innerHTML=LOG.slice(0,60).map(x=>{const d=new Date(x.t);return `<div class="item ${x.status}"><span class="st ${x.status}"></span><div style="min-width:0"><p>${short(x.from)} ← ${short(x.to)}</p><small>${d.toLocaleDateString("he-IL",{day:"numeric",month:"numeric"})} · ${d.toLocaleTimeString("he-IL",{hour:"2-digit",minute:"2-digit"})} · ${x.status==="won"?"נסגר":"לא נסגר"}</small></div><b>₪${x.price}</b></div>`}).join("")||`<p class="note">עוד אין שיחות ביומן. אחרי כל שיחה לוחצים "נסגר" או "לא נסגר" במחשבון.</p>`;
+}
+$("#copyLog").onclick=()=>{const won=LOG.filter(x=>x.status==="won");if(!won.length){toast("אין גרירות להעתקה");return}
+  const rows=won.slice().reverse().map(x=>{const d=new Date(x.t);return[d.toLocaleDateString("en-GB"),x.from,x.to,"","בוצע",x.price,"","כן","מהמחשבון"].join("\t")});copy(rows.join("\n"),`הועתקו ${won.length} גרירות`)};
+
+/* ---------- settings ---------- */
+const FIELDS=[
+ ["בסיס ומחיר",[["base","הבסיס של מתן","מאיפה יוצאים לכל גרירה","sel"],["minPrice","מחיר מינימום ₪","כולל מע״מ"],["includedKm","ק״מ כלולים במינימום","סבב מלא: הלוך, גרירה, חזור"]]],
+ ["מחיר לק״מ",[["rate1","₪ לק״מ","אחרי הק״מ הכלולים"],["tier1Until","עד כמה ק״מ","מכאן מתחיל התעריף הארוך"],["rate2","₪ לק״מ בנסיעה ארוכה",""]]],
+ ["תוספות",[["evening","תוספת ערב ₪","א׳–ה׳ 18:00–21:00"],["offhours","תוספת מחוץ לשעות ₪","לילה, שישי, חג"],["heavy","אופנוע כבד ₪",""],["complex","חילוץ מורכב ₪","חניון תת־קרקעי, מדרגות, גלגל נעול"],["urgent","דחוף ₪",""]]],
+ ["חישובים",[["rounding","עיגול","","round"],["floorPct","מרווח מיקוח %","כמה מותר לרדת"],["vat","מע״מ %",""],["fuelPerKm","דלק ובלאי ₪ לק״מ","גרר + טנדר"],["speed","מהירות ממוצעת קמ״ש",""],["handlingMin","דקות העמסה ופריקה",""],["monthlyGoal","יעד גרירות לחודש",""],["phone","הטלפון של מתן","מופיע בהודעת הוואטסאפ","txt"]]]
+];
+function renderSet(){
+  $("#setForm").innerHTML=FIELDS.map(([h,fs])=>`<div class="grp"><h4>${h}</h4>${fs.map(([k,l,s,t])=>{
+    const ctl=t==="sel"?`<select id="set-${k}">${P.map(p=>`<option ${p.n===S[k]?"selected":""}>${p.n}</option>`).join("")}</select>`
+      :t==="round"?`<select id="set-${k}" style="width:110px"><option value="9" ${S[k]==="9"?"selected":""}>…9</option><option value="10" ${S[k]==="10"?"selected":""}>10 ₪</option><option value="50" ${S[k]==="50"?"selected":""}>50 ₪</option></select>`
+      :`<input id="set-${k}" ${t==="txt"?'inputmode="tel" style="direction:ltr"':'inputmode="decimal"'} value="${S[k]}">`;
+    return `<div class="s"><label for="set-${k}">${l}${s?`<small>${s}</small>`:""}</label>${ctl}</div>`}).join("")}</div>`).join("");
+  $$("#setForm input,#setForm select").forEach(el=>el.onchange=()=>{const k=el.id.slice(4);let v=el.value;if(el.tagName==="INPUT"&&k!=="phone"){v=parseFloat(v);if(!isFinite(v)){el.value=S[k];return}}S[k]=v;store.set("settings",S);update();toast("נשמר")});
+}
+$("#resetSet").onclick=()=>{S=Object.assign({},DEF);store.set("settings",S);renderSet();update();toast("חזרנו לברירת מחדל")};
+
+/* ---------- nav ---------- */
+function go(v){$$(".nav button").forEach(b=>b.toggleAttribute("aria-current",b.dataset.v===v));if($(".nav button[aria-current]"))$(".nav button[aria-current]").setAttribute("aria-current","page");["quote","log","set"].forEach(x=>$("#v-"+x).hidden=x!==v);if(v==="log")renderLog();if(v==="set")renderSet();scrollTo(0,0)}
+$$(".nav button").forEach(b=>b.onclick=()=>go(b.dataset.v));
+
+/* ---------- boot: sample job so the first screen shows a real quote ---------- */
+let lastAuto=autoMode();renderClock();setInterval(()=>{renderClock();const a=autoMode();if(a!==lastAuto){lastAuto=a;if(!modeManual)update()}},30000);
+renderChips();
+const firstRun=!store.get("seen",false);
+if(firstRun){pick=byName["נס ציונה"];dest=byName["תל אביב – מרכז"];$("#pick").value=pick.n;$("#dest").value=dest.n;store.set("seen",true)}
+update();
+})();
+</script>
