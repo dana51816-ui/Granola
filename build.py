@@ -7,10 +7,11 @@ from PIL import Image
 root = pathlib.Path(__file__).parent
 app = (root/'src/app.html').read_text()
 places = (root/'src/places.js').read_text()
+main = (root/'src/main.js').read_text()
 im = Image.open(root/'assets/logo-full.png').convert('RGBA')
 b = io.BytesIO(); im.resize((256,256), Image.LANCZOS).save(b, 'WEBP', quality=82)
 logo = 'data:image/webp;base64,' + base64.b64encode(b.getvalue()).decode()
-frag = app.replace('@@LOGO@@', logo).replace('/*@@PLACES@@*/', places)
+frag = app.replace('@@LOGO@@', logo).replace('/*@@PLACES@@*/', places).replace('/*@@MAIN@@*/', main)
 (root/'dist').mkdir(exist_ok=True)
 (root/'dist/artifact.html').write_text(frag)
 
@@ -23,7 +24,7 @@ for s in (180, 192, 512):
   "icons": [{"src": "icon-192.png", "sizes": "192x192", "type": "image/png"},
             {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"}]
 }, ensure_ascii=False, indent=1))
-(docs/'sw.js').write_text("""const C='grr-v1';
+(docs/'sw.js').write_text("""const C='grr-v2';
 self.addEventListener('install',e=>{e.waitUntil(caches.open(C).then(c=>c.addAll(['./','./index.html','./manifest.webmanifest','./icon-192.png'])));self.skipWaiting()});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==C).map(k=>caches.delete(k)))));self.clients.claim()});
 self.addEventListener('fetch',e=>{e.respondWith(fetch(e.request).then(r=>{const cp=r.clone();caches.open(C).then(c=>c.put(e.request,cp)).catch(()=>{});return r}).catch(()=>caches.match(e.request)))});
