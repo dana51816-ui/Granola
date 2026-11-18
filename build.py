@@ -11,6 +11,9 @@ main = (root/'src/main.js').read_text()
 im = Image.open(root/'assets/logo-full.png').convert('RGBA')
 b = io.BytesIO(); im.resize((256,256), Image.LANCZOS).save(b, 'WEBP', quality=82)
 logo = 'data:image/webp;base64,' + base64.b64encode(b.getvalue()).decode()
+def uri(p):
+    return 'data:image/webp;base64,' + base64.b64encode((root/p).read_bytes()).decode()
+app = app.replace('@@HERO@@', uri('assets/hero.webp')).replace('@@AVATAR@@', uri('assets/avatar.webp')).replace('@@CHESS@@', uri('assets/chess.webp'))
 frag = app.replace('@@LOGO@@', logo).replace('/*@@PLACES@@*/', places).replace('/*@@MAIN@@*/', main)
 (root/'dist').mkdir(exist_ok=True)
 (root/'dist/artifact.html').write_text(frag)
@@ -24,8 +27,8 @@ for s in (180, 192, 512):
   "icons": [{"src": "icon-192.png", "sizes": "192x192", "type": "image/png"},
             {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"}]
 }, ensure_ascii=False, indent=1))
-(docs/'sw.js').write_text("""const C='grr-v2';
-self.addEventListener('install',e=>{e.waitUntil(caches.open(C).then(c=>c.addAll(['./','./index.html','./manifest.webmanifest','./icon-192.png'])));self.skipWaiting()});
+(docs/'sw.js').write_text("""const C='grr-v3';
+self.addEventListener('install',e=>{e.waitUntil(caches.open(C).then(c=>c.addAll(['./','./index.html','./config.js','./manifest.webmanifest','./icon-192.png'])));self.skipWaiting()});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==C).map(k=>caches.delete(k)))));self.clients.claim()});
 self.addEventListener('fetch',e=>{e.respondWith(fetch(e.request).then(r=>{const cp=r.clone();caches.open(C).then(c=>c.put(e.request,cp)).catch(()=>{});return r}).catch(()=>caches.match(e.request)))});
 """)
@@ -42,8 +45,12 @@ head = """<!doctype html>
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" href="icon-192.png">
 <style>:root{padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}body{margin:0}[hidden]{display:none!important}img{max-width:100%}</style>
+<script src="config.js"></script>
 </head><body>
 """
 tail = "\n<script>if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{})</script>\n</body></html>\n"
 (docs/'index.html').write_text(head + frag + tail)
+cfg = docs/'config.js'
+if not cfg.exists():
+    cfg.write_text('// מפתח Google Maps לכל המכשירים (אופציונלי). אפשר גם להדביק אותו במסך התעריפים באפליקציה.\nwindow.GRR_CONFIG = { gkey: "" };\n')
 print('built', len(frag)//1024, 'KB')
